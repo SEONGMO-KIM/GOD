@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀘스트 목록 - G.O.D.</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="AuthService.js"></script>
+    <style>
+        .quest-row {
+            transition: all 0.2s ease-in-out;
+        }
+        .quest-row:hover {
+            background-color: #f3f4f6;
+        }
+        .task-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .task-list.open {
+            max-height: 500px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="index.html">
+                    <h1 class="text-xl font-bold text-black hover:text-indigo-300 transition duration-200">Growth Optimization Device
+                    </h1>
+                </a>                
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link text-white hover:text-indigo-300 active">홈</a>
+                    <a href="create-quest.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 생성</a>
+                    <a href="quest-list.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 목록</a>
+                    <a href="profile.html" class="nav-link text-gray-600 hover:text-indigo-600">프로필</a>
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <a href="login.html" class="text-gray-600 hover:text-indigo-600">로그인</a>
+                        <a href="register.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">회원가입</a>
+                    </div>
+                    <div id="userInfo" class="hidden">
+                        <span id="userName" class="text-gray-800 mr-2"></span>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-700">로그아웃</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+        <!-- 통계 섹션 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">총 퀘스트</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalQuests">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">진행중</h3>
+                <p class="text-3xl font-bold text-green-600" id="activeQuests">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">완료됨</h3>
+                <p class="text-3xl font-bold text-purple-600" id="completedQuests">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">총 태스크 완료율</h3>
+                <p class="text-3xl font-bold text-orange-600" id="taskCompletion">0%</p>
+            </div>
+        </div>
+
+        <!-- 필터 및 검색 섹션 -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">카테고리 필터</label>
+                    <select id="categoryFilter" class="w-full p-2 border rounded">
+                        <option value="">전체</option>
+                        <option value="기본인성">기본인성</option>
+                        <option value="자기계발">자기계발</option>
+                        <option value="예술">예술</option>
+                        <option value="운동">운동</option>
+                        <option value="학업">학업</option>
+                        <option value="사회활동">사회활동</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">난이도 필터</label>
+                    <select id="difficultyFilter" class="w-full p-2 border rounded">
+                        <option value="">전체</option>
+                        <option value="E">E - 일반인 수준</option>
+                        <option value="D">D - 취미 수준</option>
+                        <option value="C">C - 준전문가 수준</option>
+                        <option value="B">B - 전문가 수준</option>
+                        <option value="A">A - 최고 전문가 수준</option>
+                        <option value="S">S - 인류 최고 수준</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">검색</label>
+                    <input type="text" id="searchInput" class="w-full p-2 border rounded" placeholder="퀘스트 제목 검색...">
+                </div>
+            </div>
+        </div>
+
+        <!-- 퀘스트 목록 테이블 -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카테고리</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">난이도</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카르마</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">진행률</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                    </tr>
+                </thead>
+                <tbody id="questTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- 퀘스트 행들이 여기에 동적으로 추가됨 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="QuestSystem.js"></script>
+    <script>
+        const questSystem = new QuestSystem();
+        
+        function updateStats() {
+            const stats = questSystem.storage.getStats();
+            document.getElementById('totalQuests').textContent = stats.totalQuests;
+            document.getElementById('activeQuests').textContent = stats.activeQuests;
+            document.getElementById('completedQuests').textContent = stats.completedQuests;
+            const completionRate = stats.totalTasks > 0 
+                ? Math.round((stats.completedTasks / stats.totalTasks) * 100) 
+                : 0;
+            document.getElementById('taskCompletion').textContent = `${completionRate}%`;
+        }
+
+        function getStatusBadgeHTML(status) {
+            const colors = {
+                active: 'bg-green-100 text-green-800',
+                completed: 'bg-blue-100 text-blue-800',
+                failed: 'bg-red-100 text-red-800'
+            };
+            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors[status]}">${status}</span>`;
+        }
+
+        function renderQuestList(filters = {}) {
+            const tbody = document.getElementById('questTableBody');
+            tbody.innerHTML = '';
+            
+            const quests = questSystem.storage.getAllQuests()
+                .filter(quest => {
+                    if (filters.category && quest.category !== filters.category) return false;
+                    if (filters.difficulty && quest.difficulty !== filters.difficulty) return false;
+                    if (filters.search && !quest.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
+                    return true;
+                });
+
+            quests.forEach(quest => {
+                const completedTasks = quest.tasks.filter(task => task.isCompleted).length;
+                const totalTasks = quest.tasks.length;
+                const progress = Math.round((completedTasks / totalTasks) * 100) || 0;
+
+                const row = document.createElement('tr');
+                row.className = 'quest-row';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${getStatusBadgeHTML(quest.status)}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${quest.title}</div>
+                        <div class="task-list transition-all">
+                            ${quest.tasks.map(task => `
+                                <div class="flex items-center mt-2">
+                                    <input type="checkbox" ${task.isCompleted ? 'checked' : ''} 
+                                           onchange="updateTaskStatus('${quest.id}', ${task.id}, this.checked)"
+                                           class="mr-2">
+                                    <span class="text-sm text-gray-600">${task.description}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-sm rounded-full bg-gray-100">${quest.category}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm">${quest.difficulty}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${quest.karma.color}"></div>
+                            <span class="text-sm">${quest.karma.points}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">${progress}%</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="toggleTasks(this)" class="text-blue-600 hover:text-blue-900 mr-3">
+                            태스크 보기
+                        </button>
+                        <button onclick="deleteQuest('${quest.id}')" class="text-red-600 hover:text-red-900">
+                            삭제
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleTasks(button) {
+            const taskList = button.closest('tr').querySelector('.task-list');
+            taskList.classList.toggle('open');
+            button.textContent = taskList.classList.contains('open') ? '태스크 숨기기' : '태스크 보기';
+        }
+
+        function updateTaskStatus(questId, taskId, isCompleted) {
+            questSystem.storage.updateTaskStatus(questId, taskId, isCompleted);
+            updateStats();
+            renderQuestList(getCurrentFilters());
+        }
+
+        function deleteQuest(questId) {
+            if (confirm('이 퀘스트를 삭제하시겠습니까?')) {
+                questSystem.storage.deleteQuest(questId);
+                updateStats();
+                renderQuestList(getCurrentFilters());
+            }
+        }
+
+        function getCurrentFilters() {
+            return {
+                category: document.getElementById('categoryFilter').value,
+                difficulty: document.getElementById('difficultyFilter').value,
+                search: document.getElementById('searchInput').value
+            };
+        }
+
+        // 이벤트 리스너 설정
+        document.getElementById('categoryFilter').addEventListener('change', () => {
+            renderQuestList(getCurrentFilters());
+        });
+
+        document.getElementById('difficultyFilter').addEventListener('change', () => {
+            renderQuestList(getCurrentFilters());
+        });
+
+        document.getElementById('searchInput').addEventListener('input', () => {
+            renderQuestList(getCurrentFilters());
+        });
+
+        // 초기 로드
+        window.addEventListener('DOMContentLoaded', () => {
+            updateStats();
+            renderQuestList();
+        });
+    </script>
+</body>
+</html>

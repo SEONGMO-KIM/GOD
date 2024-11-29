@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀘스트 생성 - G.O.D.</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="AuthService.js"></script>
+    <style>
+        .quest-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .quest-card:hover {
+            transform: translateY(-5px);
+        }
+        .karma-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .nav-link {
+            transition: color 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            color: #4F46E5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 네비게이션 바 -->
+    <div class="container mx-auto px-4 py-8">
+        <nav class="bg-white shadow-lg mb-8">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <a href="index.html">
+                        <h1 class="text-xl font-bold text-black hover:text-indigo-300 transition duration-200">Growth Optimization Device
+                        </h1>
+                    </a>
+                    <div class="flex items-center space-x-6">
+                        <a href="index.html" class="nav-link text-gray-600 hover:text-indigo-300 active">홈</a>
+                        <a href="create-quest.html" class="nav-link text-blue-600 hover:text-indigo-600">퀘스트 생성</a>
+                        <a href="quest-list.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 목록</a>
+                        <a href="profile.html" class="nav-link text-gray-600 hover:text-indigo-600">프로필</a>
+                        <div id="authButtons" class="flex items-center space-x-4">
+                            <a href="login.html" class="text-gray-600 hover:text-indigo-600">로그인</a>
+                            <a href="register.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">회원가입</a>
+                        </div>
+                        <div id="userInfo" class="hidden">
+                            <span id="userName" class="text-gray-800 mr-2"></span>
+                            <button onclick="logout()" class="text-red-600 hover:text-red-700">로그아웃</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4 py-8">
+            <!-- 퀘스트 생성 폼 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-4">새 퀘스트 생성</h2>
+                <form id="questForm" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">퀘스트 제목</label>
+                        <input type="text" id="questTitle" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">카테고리</label>
+                        <select id="questCategory" class="w-full p-2 border rounded">
+                            <option value="기본인성">기본인성</option>
+                            <option value="자기계발">자기계발</option>
+                            <option value="예술">예술</option>
+                            <option value="운동">운동</option>
+                            <option value="학업">학업</option>
+                            <option value="사회활동">사회활동</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">태스크 목록</label>
+                        <div id="taskList" class="space-y-2">
+                            <div class="flex gap-2">
+                                <input type="text" class="task-input w-full p-2 border rounded" placeholder="태스크 내용">
+                                <button type="button" class="remove-task px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">삭제</button>
+                            </div>
+                        </div>
+                        <button type="button" id="addTask" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            태스크 추가
+                        </button>
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                        퀘스트 생성
+                    </button>
+                </form>
+            </div>
+
+            <!-- 퀘스트 목록 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="questList">
+                <!-- 퀘스트 카드 템플릿 -->
+                <template id="questCardTemplate">
+                    <div class="quest-card bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold quest-title"></h3>
+                            <span class="px-3 py-1 rounded text-sm quest-category"></span>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center">
+                                <span class="karma-color"></span>
+                                <span class="quest-karma"></span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-gray-600">난이도:</span>
+                                <span class="ml-2 quest-difficulty"></span>
+                            </div>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h4 class="font-bold mb-2">보상</h4>
+                            <div class="grid grid-cols-3 gap-2 text-sm">
+                                <div>
+                                    <span class="text-gray-600">경험치:</span>
+                                    <span class="quest-exp"></span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">스킬:</span>
+                                    <span class="quest-skill"></span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">카르마:</span>
+                                    <span class="quest-karma-points"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script src="QuestSystem.js"></script>
+    <script>
+        // HTML 파일의 script 태그 내용 업데이트
+const questSystem = new QuestSystem();
+
+// 페이지 로드시 저장된 퀘스트 표시
+window.addEventListener('DOMContentLoaded', () => {
+    const quests = questSystem.storage.getAllQuests();
+    quests.forEach(quest => {
+        addQuestCard(quest);
+    });
+
+    // 통계 업데이트
+    updateStats();
+});
+
+// 통계 업데이트 함수
+function updateStats() {
+    const stats = questSystem.storage.getStats();
+    // 필요한 통계 정보를 UI에 표시
+}
+
+// 폼 제출 이벤트 수정
+document.getElementById('questForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const questData = {
+        목표: document.getElementById('questTitle').value,
+        Q: Array.from(document.getElementsByClassName('task-input'))
+            .map(input => input.value)
+            .filter(value => value.trim() !== '')
+    };
+
+    const quest = questSystem.processQuest(questData);
+    addQuestCard(quest);
+    updateStats();
+    
+    // 폼 초기화
+    e.target.reset();
+    document.getElementById('taskList').innerHTML = `
+        <div class="flex gap-2">
+            <input type="text" class="task-input w-full p-2 border rounded" placeholder="태스크 내용">
+            <button type="button" class="remove-task px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">삭제</button>
+        </div>
+    `;
+});
+
+// 퀘스트 카드에 삭제 기능 추가
+function addQuestCard(questSummary) {
+    // 기존 카드 생성 코드...
+
+    // 삭제 버튼 추가
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 mt-4';
+    deleteButton.textContent = '퀘스트 삭제';
+    deleteButton.onclick = () => {
+        if (confirm('이 퀘스트를 삭제하시겠습니까?')) {
+            questSystem.storage.deleteQuest(questSummary.id);
+            card.remove();
+            updateStats();
+        }
+    };
+    card.appendChild(deleteButton);
+}
+    </script>
+</body>
+</html>

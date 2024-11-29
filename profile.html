@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로필 - G.O.D.</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="AuthService.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 네비게이션 바 -->
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="index.html">
+                    <h1 class="text-xl font-bold text-black hover:text-indigo-300 transition duration-200">Growth Optimization Device
+                    </h1>
+                </a>                
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link text-white hover:text-indigo-300 active">홈</a>
+                    <a href="create-quest.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 생성</a>
+                    <a href="quest-list.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 목록</a>
+                    <a href="profile.html" class="nav-link text-gray-600 hover:text-indigo-600 active">프로필</a>
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <a href="login.html" class="text-gray-600 hover:text-indigo-600">로그인</a>
+                        <a href="register.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">회원가입</a>
+                    </div>
+                    <div id="userInfo" class="hidden">
+                        <span id="userName" class="text-gray-800 mr-2"></span>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-700">로그아웃</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- 프로필 카드 -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                <div class="bg-indigo-600 h-32"></div>
+                <div class="px-6 py-4 relative">
+                    <div class="absolute -top-16 left-6">
+                        <div class="w-32 h-32 rounded-full bg-white p-2">
+                            <div class="w-full h-full rounded-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-4xl text-gray-600" id="userInitial">U</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-16">
+                        <h2 class="text-2xl font-bold text-gray-800" id="userName">사용자</h2>
+                        <p class="text-gray-600" id="userLevel">레벨 1</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 통계 그리드 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">총 경험치</h3>
+                    <p class="text-3xl font-bold text-indigo-600" id="totalExp">0 XP</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">카르마 포인트</h3>
+                    <p class="text-3xl font-bold text-green-600" id="karmaPoints">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">완료한 퀘스트</h3>
+                    <p class="text-3xl font-bold text-purple-600" id="completedQuests">0</p>
+                </div>
+            </div>
+
+            <!-- 진행 상황 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">레벨 진행 상황</h3>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-indigo-600 bg-indigo-200">
+                                진행도
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold inline-block text-indigo-600" id="expProgress">
+                                0%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-indigo-200">
+                        <div id="expProgressBar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-600" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 업적 섹션 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">획득한 업적</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="achievements">
+                    <!-- 업적 템플릿 -->
+                    <div class="text-center p-4 rounded-lg border-2 border-gray-200">
+                        <div class="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">🎯</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">첫 퀘스트</h4>
+                        <p class="text-sm text-gray-600">첫 번째 퀘스트 완료</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 최근 활동 -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">최근 활동</h3>
+                <div class="space-y-4" id="recentActivities">
+                    <!-- 활동 내역이 동적으로 추가됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="QuestSystem.js"></script>
+    <script>
+        class UserProfile {
+            constructor() {
+                this.data = this.loadProfile() || {
+                    name: '사용자',
+                    level: 1,
+                    exp: 0,
+                    karma: 0,
+                    completedQuests: 0,
+                    achievements: [],
+                    activities: []
+                };
+                this.updateUI();
+            }
+
+            loadProfile() {
+                const stored = localStorage.getItem('userProfile');
+                return stored ? JSON.parse(stored) : null;
+            }
+
+            saveProfile() {
+                localStorage.setItem('userProfile', JSON.stringify(this.data));
+            }
+
+            updateStats(questSystem) {
+                const stats = questSystem.storage.getStats();
+                this.data.completedQuests = stats.completedQuests;
+                
+                // 경험치 계산
+                const quests = questSystem.storage.getAllQuests();
+                this.data.exp = quests.reduce((total, quest) => {
+                    return total + (quest.rewards?.experience || 0);
+                }, 0);
+
+                // 카르마 포인트 계산
+                this.data.karma = quests.reduce((total, quest) => {
+                    return total + (quest.karma?.points || 0);
+                }, 0);
+
+                // 레벨 계산
+                this.data.level = Math.floor(this.data.exp / 1000) + 1;
+
+                this.saveProfile();
+                this.updateUI();
+            }
+
+            updateUI() {
+                document.getElementById('userName').textContent = this.data.name;
+                document.getElementById('userLevel').textContent = `레벨 ${this.data.level}`;
+                document.getElementById('userInitial').textContent = this.data.name[0];
+                document.getElementById('totalExp').textContent = `${this.data.exp} XP`;
+                document.getElementById('karmaPoints').textContent = this.data.karma;
+                document.getElementById('completedQuests').textContent = this.data.completedQuests;
+
+                // 레벨 진행도 계산
+                const expForNextLevel = this.data.level * 1000;
+                const currentLevelExp = this.data.exp % 1000;
+                const progress = (currentLevelExp / expForNextLevel) * 100;
+                
+                document.getElementById('expProgress').textContent = `${Math.round(progress)}%`;
+                document.getElementById('expProgressBar').style.width = `${progress}%`;
+
+                this.updateActivities();
+            }
+
+            addActivity(activity) {
+                this.data.activities.unshift({
+                    text: activity,
+                    timestamp: new Date().toISOString()
+                });
+                if (this.data.activities.length > 10) {
+                    this.data.activities.pop();
+                }
+                this.saveProfile();
+                this.updateActivities();
+            }
+
+            updateActivities() {
+                const container = document.getElementById('recentActivities');
+                container.innerHTML = this.data.activities.map(activity => `
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <span class="text-gray-700">${activity.text}</span>
+                        <span class="text-sm text-gray-500">
+                            ${new Date(activity.timestamp).toLocaleDateString()}
+                        </span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 초기화
+        const questSystem = new QuestSystem();
+        const userProfile = new UserProfile();
+
+        // 페이지 로드시 통계 업데이트
+        window.addEventListener('DOMContentLoaded', () => {
+            userProfile.updateStats(questSystem);
+        });
+    </script>
+</body>
+</html>

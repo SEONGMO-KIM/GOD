@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - G.O.D.</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="AuthService.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 네비게이션 바는 동일 -->
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="index.html">
+                    <h1 class="text-xl font-bold text-black hover:text-indigo-300 transition duration-200">Growth Optimization Device
+                    </h1>
+                </a>                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link text-white hover:text-indigo-300 active">홈</a>
+                    <a href="create-quest.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 생성</a>
+                    <a href="quest-list.html" class="nav-link text-gray-600 hover:text-indigo-600">퀘스트 목록</a>
+                    <a href="profile.html" class="nav-link text-gray-600 hover:text-indigo-600">프로필</a>
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <a href="login.html" class="text-gray-600 hover:text-indigo-600">로그인</a>
+                        <a href="register.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">회원가입</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800">회원가입</h2>
+                <p class="text-gray-600 mt-2">새로운 모험을 시작하세요</p>
+            </div>
+            <form id="registerForm" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="name">이름</label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">이메일</label>
+                    <input type="email" id="email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="passwordConfirm">비밀번호 확인</label>
+                    <input type="password" id="passwordConfirm" name="passwordConfirm" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit"
+                        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
+                    회원가입
+                </button>
+            </form>
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    이미 계정이 있으신가요?
+                    <a href="login.html" class="text-indigo-600 hover:text-indigo-800 font-medium">로그인</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const authService = new AuthService();  // 인스턴스 생성
+
+    // registerForm 처리
+    if (document.getElementById('registerForm')) {
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+
+            if (password !== passwordConfirm) {
+                alert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            try {
+                authService.register({
+                    name,
+                    email,
+                    password
+                });
+                alert('회원가입이 완료되었습니다.');
+                window.location.href = 'login.html';
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    }
+    </script>
+    <script>
+        // 인증 상태 확인
+        if (!window.authService) {
+            window.authService = new AuthService();
+        }
+    
+        // 로그인이 필요한 페이지의 경우 아래 코드도 추가
+        if (!authService.getCurrentUser() && 
+            !window.location.pathname.includes('login.html') && 
+            !window.location.pathname.includes('register.html')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
